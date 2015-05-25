@@ -1,0 +1,20 @@
+{
+  "name": "rover-bot",
+  "version": "0.1.0",
+  "description": "Pee Wee Rovers for JSConf 2015 (JavaScript Robotics)",
+  "dependencies": {
+    "express": "latest",
+    "galileo-io": "latest",
+    "imp-io": "latest",
+    "johnny-five": "latest",
+    "keypress": "latest",
+    "particle-io": "latest",
+    "socket.io": "latest"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Rick Waldron",
+  "license": "MIT"
+}

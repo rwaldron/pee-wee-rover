@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="initial-scale=1" />
+  <title>Rover Control Center</title>
+  <style type="text/css">
+    * {
+      -webkit-box-sizing: border-box;
+      -moz-box-sizing: border-box;
+      box-sizing: border-box;
+    }
+
+    .container {
+      width: 100%;
+      text-align: center;
+    }
+
+    .controls {
+      font-size: 5rem;
+    }
+
+    .controls button {
+      margin-top: 10px;
+      font-size: 5rem;
+      width: 100%;
+      height: 100px;
+    }
+
+    .controls .active {
+      background-color: gray;
+    }
+
+    .controls div {
+      display: inline-block;
+    }
+
+    #column-0 {
+      width: 10%;
+      float: left;
+    }
+
+    #column-1 {
+      width: 30%;
+      float: left;
+      padding-right: 10px;
+      padding-top: 110px;
+    }
+
+    #column-2 {
+      width: 30%;
+    }
+
+    #column-3 {
+      width: 30%;
+      float: right;
+      padding-left: 10px;
+      padding-top: 110px;
+    }
+
+    input[type=range][orient=vertical] {
+      writing-mode: bt-lr; /* IE */
+      -webkit-appearance: slider-vertical; /* WebKit */
+      width: 100%;
+      height: 340px;
+      margin-left: -10px;
+      padding: 0 0 0 0;
+    }
+
+    @media (min-width: 35em) {
+      .controls button {
+        margin-top: 0px;
+        font-size: 5rem;
+        width: 100%;
+        height: 90px;
+      }
+      input[type=range][orient=vertical] {
+        writing-mode: bt-lr; /* IE */
+        -webkit-appearance: slider-vertical; /* WebKit */
+        width: 100%;
+        height: 300px;
+        margin-left: -10px;
+        padding: 0 0 0 0;
+      }
+      #column-1 {
+        padding-top: 100px;
+      }
+      #column-3 {
+        padding-top: 100px;
+      }
+    }
+
+    @media (min-width: 45em) {
+      .controls button {
+        margin-top: 10px;
+        font-size: 10rem;
+        width: 100%;
+        height: 200px;
+      }
+      input[type=range][orient=vertical] {
+        writing-mode: bt-lr; /* IE */
+        -webkit-appearance: slider-vertical; /* WebKit */
+        width: 100%;
+        height: 620px;
+        margin-left: -10px;
+        padding: 0 0 0 0;
+      }
+      #column-1 {
+        padding-top: 210px;
+      }
+      #column-3 {
+        padding-top: 210px;
+      }
+
+    }
+  </style>
+  <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/es6-shim/0.31.2/es6-shim.js"></script>
+</head>
+<body>
+  <div class="container">
+    <div class="controls">
+      <div id="column-0">
+        <input name="speed" data-command="speed" type="range" orient="vertical" min="0" max="100" step="1" value="0">
+        <output>000</output>
+      </div>
+
+      <div id="column-1">
+        <button data-component="rover" data-command="left">◀</button>
+      </div>
+      <div id="column-2">
+        <button data-component="rover" data-command="fwd">▲</button><br>
+        <button data-component="rover" data-command="stop">◼</button><br>
+        <button data-component="rover" data-command="rev">▼</button>
+      </div>
+      <div id="column-3">
+        <button data-component="rover" data-command="right">▶</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var socket = io();
+    var throttle = document.querySelector("input[type='range']");
+    var display = document.querySelector("output");
+    var buttons = document.querySelectorAll("button");
+
+    var keyboard = {
+      active: null,
+      commands: {
+        // w
+        87: "speed",
+        // x
+        88: "speed",
+        // arrow left
+        37: "left",
+        // arrow up
+        38: "fwd",
+        // arrow right
+        39: "right",
+        // arrow down
+        40: "rev",
+        // space
+        32: "stop"
+      }
+    };
+
+    function instruct(command, speed) {
+      display.innerText = speed;
+      socket.emit("instruction", {
+        command: command,
+        speed: speed
+      });
+    }
+
+    Array.from(buttons).forEach(function(button) {
+      button.onclick = function(event) {
+        instruct(event.target.dataset.command, throttle.valueAsNumber);
+      };
+    });
+
+    throttle.oninput = function() {
+      instruct("speed", throttle.valueAsNumber);
+    };
+
+    var valids = Object.keys(keyboard.commands);
+
+    document.body.onkeydown = function(event) {
+      var step = 10;
+      var elem, command;
+
+      if (valids.indexOf(String(event.keyCode)) === -1) {
+        return;
+      }
+
+      if (event.keyCode === 87 || event.keyCode === 88) {
+        throttle.value = throttle.valueAsNumber + (event.keyCode === 87 ? step : step * -1);
+      } else {
+        if (event.repeat) {
+          return;
+        }
+      }
+
+      command = keyboard.commands[event.keyCode];
+      elem = document.querySelector("[data-command='" + command + "']");
+      elem.classList.add("active");
+
+      setTimeout(function() {
+        elem.classList.remove("active");
+      }, 100);
+
+      instruct(command, throttle.valueAsNumber);
+    };
+  </script>
+</body>
+</html>
